@@ -170,13 +170,14 @@ impl PyGUI {
 }
 use numpy::{PyArray1, PyArray2, PyArray3, PyReadonlyArray3};
 
-use std::hash::Hash;
 use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 fn calculate_hash<T: Hash>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
 }
+
 #[pymethods]
 impl UiCtx {
     fn button(&mut self, label: &str, py: Python) -> PyResult<bool> {
@@ -209,27 +210,28 @@ impl UiCtx {
             // let flat = img;
             if channels == 4 {
                 let slice = img.as_slice()?;
-                let hash = calculate_hash(slice);
-                let state = &ui.memory().data;
-                if let Some(prev_hash) = state.get(egui::Id::new(name)) {
-                    if hash != prev_hash {
-                        let tid = state.get(egui::Id::new(hash)).unwrap();
-                        
+                let hash = calculate_hash(&slice);
+                let tid = {
+                    let mut mem = ui.memory();
+                    let frame = self.frame.clone();
+                    let (prev_hash, prev_id) =
+                        mem.data
+                            .get_temp_mut_or_insert_with(egui::Id::new(name), || {
+                                let img =
+                                    epi::Image::from_rgba_unmultiplied([width, height], slice);
+                                (hash, frame.alloc(img))
+                            });
+                    if hash != *prev_hash {
+                        self.frame.free(*prev_id);
+                        let img = epi::Image::from_rgba_unmultiplied([width, height], slice);
+                        *prev_id = self.frame.alloc(img);
+                        *prev_hash = hash;
+                        *prev_id
+                    } else {
+                        *prev_id
                     }
-                }
-                let prev_hash = state.get_temp_mut_or_insert(egui::Id::new(name), hash);
-                if hash != prev_hash {
-
-
-                }
-                let tid = state.get_temp_mut_or_insert_with(egui::Id::from(hash), || {
-                       let img = epi::Image::from_rgba_unmultiplied([width, height], slice);
-                       self.frame.alloc(img)
-                   });
-
-                // let tid = self.frame.alloc(img);
+                };
                 ui.image(tid, egui::vec2(height as f32, width as f32));
-                self.frame.free(tid);
             }
             dbg!("plotting", name, channels);
             Ok(())
