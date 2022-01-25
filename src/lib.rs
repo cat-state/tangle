@@ -233,7 +233,6 @@ impl UiCtx {
                 };
                 ui.image(tid, egui::vec2(height as f32, width as f32));
             }
-            dbg!("plotting", name, channels);
             Ok(())
         } else {
             panic!("trying to use ui after liftime is over");

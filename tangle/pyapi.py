@@ -1,6 +1,7 @@
 import inspect
 import dis
-from typing import Any, Dict, List
+from types import CodeType, FunctionType
+from typing import Any, Dict, Union
 import textwrap
 
 import matplotlib
@@ -57,8 +58,9 @@ def memo(name):
                 memoized._changed = False
                 return memoized._prev_return
 
-        memoized._prev_return = []
+
         memoized._changed = False
+        memoized._prev_return = []
         curr_plots = []
         def wrapped(*args):
             def show(ui):
@@ -70,16 +72,13 @@ def memo(name):
                 plt.clf()
                 ret = memoized(*args)
                 if memoized._changed:
-                    print(name, memoized._changed, CURR_PLOTS)
                     curr_plots = CURR_PLOTS[:]
 
-                    
                 if isinstance(ret, Exception):
                     ui.visualize_py(f"{name}_dbg_error", ret)
                     raise ret
 
                 for i, img in enumerate(curr_plots):
-                    print("imaging, i")
                     ui.image(f"{name}_{i}_plot", img)
                 
                 # i = 0
@@ -91,10 +90,9 @@ def memo(name):
             prev_return = memoized._prev_return
             ret = GUI_REF.tangle_node_output(name, show)
 
-            if not (ret is prev_return):
+            if memoized._changed:
                 for i, (r, pr) in enumerate(zip(ret, prev_return)):
                     if not eq(r, pr):
-                        print(name, i)
                         GUI_REF.output_changed(name, i)
             return ret
 
@@ -110,11 +108,18 @@ def cell_load_globals(code: str, exclude_globals: Dict[str, Any]):
     code = compile(func, "<cell>", "exec")
     cell_code = next(dis.get_instructions(code)).argval
     gbs = set()
-    for ins in dis.get_instructions(cell_code):
-        
-        if ins.opname == "LOAD_GLOBAL" and ins.argval not in exclude_globals:
+    for ins in iter_globals(cell_code):
+        if ins.argval not in exclude_globals:
             gbs.add(ins.argval)
     return list(gbs)
+
+def iter_globals(code: CodeType):
+    for ins in dis.get_instructions(code):
+        if ins.opname == 'LOAD_GLOBAL':
+            yield ins
+        elif type(ins.argval) == CodeType:
+            yield from iter_globals(ins.argval)
+        
 
 def compile_cell(name, code: str, provides):
     code = code.rstrip()
