@@ -315,7 +315,7 @@ impl Tangle {
             nodes,
         }
     }
-    
+
     pub fn emit_all(&self) -> String {
         self.emit_decorated(&None)
     }
@@ -339,45 +339,6 @@ impl Tangle {
             }
         }
     }
-
-    // pub fn refine(&self) -> Self {
-    //     match self {
-    //         Tangle::Leaf { .. } => self.clone(),
-    //         Tangle::Dataflow {
-    //             nodes,
-    //             requires,
-    //             provides,
-    //             name,
-    //         } => {
-    //             let used = nodes
-    //                 .values()
-    //                 .map(|n| n.deps().0)
-    //                 .reduce(|req1, req2| &req1.union(req2).map(|s| s.clone()).collect());
-    //             let new_nodes = if let Some(mut required) = used {
-    //                 let mut new_nodes = nodes.clone();
-    //                 for (_, node) in new_nodes.iter_mut() {
-    //                     let node_provides = match node {
-    //                         Tangle::Leaf { provides, .. } => provides,
-    //                         Tangle::Dataflow { provides, .. } => provides,
-    //                     };
-    //                     *node_provides = node_provides
-    //                         .intersection(required)
-    //                         .map(|s| s.clone())
-    //                         .collect();
-    //                 }
-    //                 new_nodes
-    //             } else {
-    //                 nodes.clone()
-    //             };
-    //             Self::Dataflow {
-    //                 name: name.clone(),
-    //                 requires: requires.clone(),
-    //                 provides: provides.clone(),
-    //                 nodes: new_nodes,
-    //             }
-    //         }
-    //     }
-    // }
 
     fn get_provides(
         code: &String,

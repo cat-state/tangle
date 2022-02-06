@@ -81,10 +81,10 @@ def memo(name):
                 for i, img in enumerate(curr_plots):
                     ui.image(f"{name}_{i}_plot", img)
                 
-                # i = 0
-                # for output in ret:
-                #     ui.visualize_py(f"{name}_dbg_{i}", output)
-                #     i += 1
+                i = 0
+                for output in ret:
+                    ui.visualize_py(f"{name}_dbg_{i}", output)
+                    i += 1
                 return ret
 
             prev_return = memoized._prev_return

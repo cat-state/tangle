@@ -178,6 +178,10 @@ fn calculate_hash<T: Hash>(t: &T) -> u64 {
     s.finish()
 }
 
+fn selectable_text(ui: &mut egui::Ui, mut text: &str) {
+    ui.add(egui::TextEdit::multiline(&mut text).desired_width(f32::INFINITY));
+}
+
 #[pymethods]
 impl UiCtx {
     fn button(&mut self, label: &str, py: Python) -> PyResult<bool> {
@@ -542,7 +546,7 @@ impl TangleApp {
                     },
                 )
                 .unwrap();
-                set_gui_ref.call1((gui,));
+                set_gui_ref.call1((gui,)).unwrap();
                 let wrapped = ui_wrapper.call0()?;
 
                 // println!("{}", flow.emit_decorated(&Some("@tangle.pyapi.memo")));
